@@ -1,0 +1,12 @@
+<resources>
+
+    <string name="app_name">Socket</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_main">MainActivity</string>
+    
+    <string name="server">Servidor</string>
+   	<string name="client">Cliente</string>
+   	<string name="send">Enviar</string>
+
+</resources>
