@@ -25,4 +25,11 @@ public class MainActivity extends Activity{
         businessLogic.configView();
     }
     
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
+    	
+    	businessLogic.closeCommunication();
+    }
+    
 }

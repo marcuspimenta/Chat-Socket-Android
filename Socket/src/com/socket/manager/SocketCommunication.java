@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.net.Socket;
 import java.io.IOException;
 
+import android.os.Handler;
+
 /**
  * 
  * @author Marcus Pimenta
@@ -13,15 +15,20 @@ import java.io.IOException;
  */
 public class SocketCommunication extends Thread {
 	
+	private int whatMsgSocket;
+	private int whatMsgNotice;
+
 	private Socket socket;
-	private SocketCallback socketCallback;
+	private Handler handler;
 
 	private DataInputStream dataInputStream = null;
 	private DataOutputStream dataOutputStream = null;
 	
-	public SocketCommunication(Socket socket, SocketCallback socketCallback){
+	public SocketCommunication(Socket socket, Handler handler, int whatMsgSocket, int whatMsgNotice){
 		this.socket = socket;
-		this.socketCallback = socketCallback;
+		this.handler = handler;
+		this.whatMsgSocket = whatMsgSocket;
+		this.whatMsgNotice = whatMsgNotice;
 	}
 	
 	@Override
@@ -32,14 +39,12 @@ public class SocketCommunication extends Thread {
 			 dataInputStream = new DataInputStream(socket.getInputStream());
 			 dataOutputStream = new DataOutputStream(socket.getOutputStream());
 			
-			 System.out.println("Conexao realizada com sucesso");
-			 
 			 while (true) {
 				 if(dataInputStream.available() > 0){
 					 byte[] msg = new byte[dataInputStream.available()];
 					 dataInputStream.read(msg, 0, dataInputStream.available());
 					 
-					 socketCallback.onSocketReceiverMsg(msg);
+					 sendHandler(whatMsgSocket, "Ele" + ": " + new String(msg));
 				 }
 			 }
 		 } catch (IOException e) {
@@ -48,8 +53,12 @@ public class SocketCommunication extends Thread {
 			 dataInputStream = null;
 			 dataOutputStream = null;
 			 
-			 System.out.println("Conexao perdida");
+			 sendHandler(whatMsgNotice, "Conexao perdida");
 		 }
+	}
+	
+	public void sendHandler(int what, Object object){
+		handler.obtainMessage(what, object).sendToTarget();
 	}
 	
 	public void sendMsg(String msg){
@@ -58,18 +67,20 @@ public class SocketCommunication extends Thread {
 				dataOutputStream.write(msg.getBytes());
 				dataOutputStream.flush();
 			}else{
-				System.out.println("Sem conexao");
+				sendHandler(whatMsgNotice, "Sem conexao");
 			}
 			
 		} catch (IOException e) {
 			e.printStackTrace(); 
 			 
-			System.out.println("Falha no envio da mensagem");
+			sendHandler(whatMsgNotice, "Falha no envio da mensagem");
 		}
 	}
 	
 	 public void stopComunication(){ 
 		try {
+			socket.close();
+			
 			if(dataInputStream != null && dataOutputStream != null){
 				dataInputStream.close();
 				dataOutputStream.close();

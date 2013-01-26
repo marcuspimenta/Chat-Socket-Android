@@ -12,39 +12,19 @@ import java.net.Socket;
  */
 public class SocketServer {
 	
-	private final int PORT = 92;
-	
 	private Socket socket;
-	private ServerSocket server;
-	private SocketCommunication communication;
 	
-	public void startServer(SocketCallback socketCallback){
+	public Socket startServer(int port){
 		try {
-			ServerSocket server = new ServerSocket(PORT);
+			ServerSocket server = new ServerSocket(port);
 			socket = server.accept();
 			
-			communication = new SocketCommunication(socket, socketCallback);
-			communication.start();
-			
+			return socket;
 		} catch (IOException e) {
 			e.printStackTrace();
 		} 
+		
+		return socket;
 	}
-	
-	public void stopServer(){
-        try{
-        	communication.stopComunication();
-        	
-	        socket.close();
-	        server.close();
-        }
-        catch (IOException e) {
-			e.printStackTrace();
-		} 
-    }
 
-	public SocketCommunication getCommunication() {
-		return communication;
-	}
-	
 }

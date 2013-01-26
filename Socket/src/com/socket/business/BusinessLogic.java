@@ -1,9 +1,13 @@
 package com.socket.business;
 
+import java.net.Socket;
+
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Handler;
 import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,11 +18,10 @@ import android.widget.EditText;
 import android.widget.ListView;
 
 import com.socket.R;
-import com.socket.manager.SocketCallback;
-import com.socket.manager.SocketClient;
 import com.socket.manager.SocketCommunication;
-import com.socket.manager.SocketServer;
 import com.socket.notice.Notice;
+import com.socket.task.SocketClientTask;
+import com.socket.task.SocketServerTask;
 
 /**
  * 
@@ -26,7 +29,8 @@ import com.socket.notice.Notice;
  * @email mvinicius.pimenta@gmail.com
  * @date 17:52:44 25/01/2013
  */
-public class BusinessLogic implements OnClickListener, SocketCallback{
+@SuppressLint("HandlerLeak")
+public class BusinessLogic implements OnClickListener{
 	
 	private EditText edMsg;
 	private Button btnSend;
@@ -38,8 +42,6 @@ public class BusinessLogic implements OnClickListener, SocketCallback{
 	private Notice notice;
 	private ArrayAdapter<String> historic;
 	
-	private SocketServer server;
-	private SocketClient client;
 	private SocketCommunication communication;
 	
 	public BusinessLogic(Activity activity){
@@ -67,16 +69,7 @@ public class BusinessLogic implements OnClickListener, SocketCallback{
 	public void onClick(View view) {
 		switch (view.getId()) {
 	        case R.id.btnSend:
-	            	String msg = edMsg.getText().toString(); 
-					
-					if(msg.trim().length() > 0){
-						edMsg.setText(""); 
-						
-						historic.add("Eu: " + msg); 
-						historic.notifyDataSetChanged();							
-					}else{
-						notice.showToast("Escreva alguma mensagem");
-					}
+	            	sendMsg();
 	                break;
 	        case R.id.btnService:
 	        		popupServer();
@@ -87,18 +80,40 @@ public class BusinessLogic implements OnClickListener, SocketCallback{
 		}
 	}
 	
+	private void sendMsg(){
+		if(communication != null){
+			String msg = edMsg.getText().toString(); 
+			
+			if(msg.trim().length() > 0){
+				edMsg.setText(""); 
+				
+				communication.sendMsg(msg);
+				
+				historic.add("Eu: " + msg); 
+				historic.notifyDataSetChanged();							
+			}else{
+				notice.showToast("Escreva alguma mensagem");
+			}
+		}else{
+			notice.showToast("Sem conexão com outro dispositivo");
+		}
+	}
+	
 	private void popupServer(){
 		AlertDialog.Builder alertConfig = new AlertDialog.Builder(context);
         alertConfig.setIcon(context.getResources().getDrawable(R.drawable.ic_launcher));
         alertConfig.setTitle("Servidor");
-        alertConfig.setMessage("Porta de comunicação");
         
         final EditText input = new EditText(context);
+        input.setHint("porta");
         input.setInputType(InputType.TYPE_CLASS_NUMBER);
         alertConfig.setView(input);	
 
         alertConfig.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
+            	closeCommunication();
+            	SocketServerTask serverTask = new SocketServerTask(context, handler, 1);
+            	serverTask.execute(new String[]{input.getText().toString()});
             }
         });
             
@@ -109,18 +124,25 @@ public class BusinessLogic implements OnClickListener, SocketCallback{
         alertConfig.create().show();
 	}
 	
+	@SuppressLint("HandlerLeak")
 	private void popupClient(){
 		AlertDialog.Builder alertConfig = new AlertDialog.Builder(context);
         alertConfig.setIcon(context.getResources().getDrawable(R.drawable.ic_launcher));
         alertConfig.setTitle("Cliente");
-        alertConfig.setMessage("Porta de comunicação");
         
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View convertView = inflater.inflate(R.layout.popup_client, null);
+        
+        final EditText editText = (EditText)convertView.findViewById(R.id.editText1);
+        final EditText editText2 = (EditText)convertView.findViewById(R.id.editText2);
+        
         alertConfig.setView(convertView);	
-
+        
         alertConfig.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
+            	closeCommunication();
+            	SocketClientTask clientTask = new SocketClientTask(context, handler, 1);
+            	clientTask.execute(new String[]{editText.getText().toString(), editText2.getText().toString()});
             }
         });
             
@@ -130,11 +152,38 @@ public class BusinessLogic implements OnClickListener, SocketCallback{
         
         alertConfig.create().show();
 	}
-
-	@Override
-	public void onSocketReceiverMsg(byte[] msg) {
-		historic.add(new String(msg));
-		historic.notifyDataSetChanged();
+	
+	public void closeCommunication(){
+		if(communication != null){
+			communication.stopComunication();
+		}
 	}
-
+	
+	private Handler handler = new Handler() {
+        public void handleMessage(android.os.Message msg) {
+            synchronized (msg) {
+                switch (msg.what) {
+                	case 1:
+                		Socket socket = (Socket)(msg.obj);
+                		communication = new SocketCommunication(socket, handler, 3, 2);
+            			communication.start();
+                		break;
+            			
+                	case 2:
+                		String message = (String)(msg.obj);
+                		
+                		notice.showToast(message);
+                		break;
+                	
+                	case 3:
+                		String messageBT = (String)(msg.obj);
+                		
+                		historic.add(messageBT);
+       				 	historic.notifyDataSetChanged();
+       				 	break;
+                }
+            }
+        };
+    };
+	
 }
