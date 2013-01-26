@@ -124,7 +124,7 @@ public class BusinessLogic implements OnClickListener{
             		SocketServerTask serverTask = new SocketServerTask(context, handler, 1);
             		serverTask.execute(new String[]{editText.getText().toString()});
             	}else{
-            		notice.showToast("Nem num valor voi digitado");
+            		notice.showToast("Nenhum valor voi digitado");
             	}
             }
         });
