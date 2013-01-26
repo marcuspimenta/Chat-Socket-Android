@@ -112,16 +112,20 @@ public class BusinessLogic implements OnClickListener{
         alertConfig.setIcon(context.getResources().getDrawable(R.drawable.ic_launcher));
         alertConfig.setTitle("Servidor");
         
-        final EditText input = new EditText(context);
-        input.setHint("porta");
-        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        alertConfig.setView(input);	
+        final EditText editText = new EditText(context);
+        editText.setHint("porta");
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        alertConfig.setView(editText);	
 
         alertConfig.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
             	closeCommunication();
-            	SocketServerTask serverTask = new SocketServerTask(context, handler, 1);
-            	serverTask.execute(new String[]{input.getText().toString()});
+            	if(editText.getText().toString().length() > 0){
+            		SocketServerTask serverTask = new SocketServerTask(context, handler, 1);
+            		serverTask.execute(new String[]{editText.getText().toString()});
+            	}else{
+            		notice.showToast("Nem num valor voi digitado");
+            	}
             }
         });
             
@@ -149,8 +153,12 @@ public class BusinessLogic implements OnClickListener{
         alertConfig.setPositiveButton("Confirmar", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
             	closeCommunication();
-            	SocketClientTask clientTask = new SocketClientTask(context, handler, 1);
-            	clientTask.execute(new String[]{editText.getText().toString(), editText2.getText().toString()});
+            	if(editText.getText().toString().length() > 0 && editText2.getText().toString().length() > 0){
+            		SocketClientTask clientTask = new SocketClientTask(context, handler, 1);
+            		clientTask.execute(new String[]{editText.getText().toString(), editText2.getText().toString()});
+            	}else{
+            		notice.showToast("Preencha todos os campos");
+            	}
             }
         });
             
