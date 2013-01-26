@@ -7,6 +7,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -69,13 +71,19 @@ public class BusinessLogic implements OnClickListener{
 	public void onClick(View view) {
 		switch (view.getId()) {
 	        case R.id.btnSend:
-	            	sendMsg();
+	        		if(isNetworkConnected()){
+	        			sendMsg();
+	        		}
 	                break;
 	        case R.id.btnService:
-	        		popupServer();
+		        	if(isNetworkConnected()){
+		        		popupServer();
+		        	}
 	                break;
 	        case R.id.btnClient:
-	        		popupClient();
+		        	if(isNetworkConnected()){
+		        		popupClient();
+		        	}
 	                break;
 		}
 	}
@@ -156,6 +164,17 @@ public class BusinessLogic implements OnClickListener{
 	public void closeCommunication(){
 		if(communication != null){
 			communication.stopComunication();
+		}
+	}
+	
+	private boolean isNetworkConnected() {
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+		if (networkInfo == null) {
+			notice.showToast("Sem conexão");
+			return false;
+		} else{
+			return true;
 		}
 	}
 	
