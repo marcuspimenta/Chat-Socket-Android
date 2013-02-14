@@ -8,7 +8,7 @@ connection and the other is the client
 
 ##Download
 You can download apk in:  
-[last version](https://raw.github.com/marcuspimenta/Chat-Socket-Android/blob/master/Socket/bin/Socket.apk)
+[last version](https://raw.github.com/marcuspimenta/Chat-Socket-Android/master/Socket/bin/Socket.apk)
 
 ##Author
 Marcus Vinícius Pimenta  
